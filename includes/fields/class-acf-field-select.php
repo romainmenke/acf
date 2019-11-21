@@ -203,23 +203,51 @@ class acf_field_select extends acf_field {
 		}
 		
 		
-		// loop 
+				$has_search_filter = false;
+		if (
+			has_filter('acf/fields/select/search') ||
+			has_filter('acf/fields/select/search/name=' . $field['name']) ||
+			has_filter('acf/fields/select/search/key=' . $field['key'])
+		) {
+			$has_search_filter = true;
+		}
+
+		// loop
 		foreach( $field['choices'] as $k => $v ) {
-			
+
 			// ensure $v is a string
 			$v = strval( $v );
-			
-			
+
 			// if searching, but doesn't exist
-			if( is_string($s) && stripos($v, $s) === false ) continue;
-			
-			
+			if ( is_string($s) ) {
+				$include = null;
+
+				if ( $has_search_filter ) {
+					$search_args = array(
+						'value' => $k,
+						'label' => $v,
+						's' => $s
+					);
+
+					$include = apply_filters('acf/fields/select/search', $include, $search_args, $field, $options['post_id'] );
+					$include = apply_filters('acf/fields/select/search/name=' . $field['name'], $include, $search_args, $field, $options['post_id'] );
+					$include = apply_filters('acf/fields/select/search/key=' . $field['key'], $include, $search_args, $field, $options['post_id'] );
+
+				}
+
+				if ( $include === null && stripos($v, $s) === false ) {
+					continue;
+				} else if ($include === false) {
+					continue;
+				}
+			}
+
 			// append
 			$results[] = array(
 				'id'	=> $k,
 				'text'	=> $v
 			);
-			
+
 		}
 		
 		
